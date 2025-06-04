@@ -1,5 +1,3 @@
-import fetch from 'node-fetch';
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método não permitido' });
@@ -7,57 +5,35 @@ export default async function handler(req, res) {
 
   const { imagens } = req.body;
 
-  if (!imagens || !Array.isArray(imagens)) {
-    return res.status(400).json({ error: 'Imagens são obrigatórias e devem ser um array' });
+  if (!imagens || !Array.isArray(imagens) || imagens.length !== 1) {
+    return res.status(400).json({ error: 'Uma única imagem é obrigatória' });
   }
 
-  const bigjpgApiKey = process.env.BIGJPG_API_KEY;
+  const imageUrl = imagens[0];
 
   try {
-    const highResUrls = [];
+    const response = await fetch('https://bigjpg.com/api/task/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.BIGJPG_API_KEY}` // Adicione se necessário
+      },
+      body: JSON.stringify({
+        url: imageUrl,
+        scale: 2 // Aumenta 2x
+      }),
+    });
 
-    for (const imageUrl of imagens) {
-      const uploadRes = await fetch('https://bigjpg.com/api/task/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-KEY': bigjpgApiKey,
-        },
-        body: JSON.stringify({
-          url: imageUrl,
-          scale: 4,
-          style: 'art',
-        }),
-      });
-
-      const uploadData = await uploadRes.json();
-      const taskId = uploadData.tid;
-
-      let status = 'processing';
-      let highResUrl = null;
-
-      while (status === 'processing') {
-        await new Promise((resolve) => setTimeout(resolve, 5000));
-        const statusRes = await fetch(`https://bigjpg.com/api/task/${taskId}`, {
-          headers: { 'X-API-KEY': bigjpgApiKey },
-        });
-        const statusData = await statusRes.json();
-        status = statusData.status;
-        if (status === 'success') {
-          highResUrl = statusData.url;
-        }
-      }
-
-      if (highResUrl) {
-        highResUrls.push(highResUrl);
-      } else {
-        throw new Error('Falha ao aumentar a resolução da imagem');
-      }
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Erro na API BigJPG: ${response.status} - ${text}`);
     }
 
-    res.status(200).json({ highResUrls });
+    const data = await response.json();
+    const highResUrl = data.outputUrl; // Ajuste conforme a resposta da API
+    res.status(200).json({ highResUrls: [highResUrl] });
   } catch (error) {
-    console.error('Erro ao aumentar resolução:', error);
-    res.status(500).json({ error: 'Erro ao aumentar resolução das imagens' });
+    console.error('Erro ao aumentar resolução:', error.message);
+    res.status(500).json({ error: `Erro ao aumentar resolução: ${error.message}` });
   }
 }
