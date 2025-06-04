@@ -30,7 +30,7 @@ export default async function handler(req, res) {
   try {
     const response = await openai.images.generate({
       prompt,
-      n: 4,
+      n: 2,
       size: '512x512',
     });
     console.log('Resposta da OpenAI:', response.data);
