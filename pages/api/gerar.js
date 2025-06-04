@@ -1,12 +1,21 @@
+console.log('Inicializando API /api/gerar'); // Log inicial
+
 import { Configuration, OpenAIApi } from 'openai';
 import { gerarPrompt } from '../../utils/geradorPrompt';
+
+console.log('Módulos importados com sucesso'); // Log após importação
 
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
 });
+console.log('Configuração OpenAI criada'); // Log após configuração
+
 const openai = new OpenAIApi(configuration);
+console.log('Cliente OpenAI inicializado'); // Log após inicialização do cliente
 
 export default async function handler(req, res) {
+  console.log('Requisição recebida em /api/gerar'); // Log ao receber requisição
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método não permitido' });
   }
