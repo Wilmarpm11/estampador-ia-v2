@@ -8,16 +8,13 @@ export default function Home() {
   const [imagens, setImagens] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [psdUrl, setPsdUrl] = useState(null);
-  const [highResUrls, setHighResUrls] = useState([]);
+  const [loadingPsd, setLoadingPsd] = useState({}); // Estado para rastrear loading por imagem
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setImagens([]);
-    setPsdUrl(null);
-    setHighResUrls([]);
 
     try {
       const res = await fetch('/api/gerar', {
@@ -34,11 +31,21 @@ export default function Home() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setImagens(data.imagens);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  const handleDownloadPsd = async (imageUrl, index) => {
+    setLoadingPsd((prev) => ({ ...prev, [index]: true }));
+    try {
+      // Primeiro, aumenta a resolução
       const highResRes = await fetch('/api/highres-download', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imagens: data.imagens }),
+        body: JSON.stringify({ imagens: [imageUrl] }), // Envia apenas a imagem selecionada
       });
 
       if (!highResRes.ok) {
@@ -48,12 +55,13 @@ export default function Home() {
 
       const highResData = await highResRes.json();
       if (highResData.error) throw new Error(highResData.error);
-      setHighResUrls(highResData.highResUrls);
+      const highResUrl = highResData.highResUrls[0];
 
+      // Depois, gera o PSD
       const psdRes = await fetch('/api/download-psd', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imagens: highResData.highResUrls }),
+        body: JSON.stringify({ imagens: [highResUrl] }),
       });
 
       if (!psdRes.ok) {
@@ -63,11 +71,18 @@ export default function Home() {
 
       const psdData = await psdRes.json();
       if (psdData.error) throw new Error(psdData.error);
-      setPsdUrl(psdData.psdUrl);
+
+      // Inicia o download do PSD
+      const link = document.createElement('a');
+      link.href = psdData.psdUrl;
+      link.download = `estampa-${index + 1}.psd`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (err) {
-      setError(err.message);
+      setError(`Erro ao baixar PSD: ${err.message}`);
     } finally {
-      setLoading(false);
+      setLoadingPsd((prev) => ({ ...prev, [index]: false }));
     }
   };
 
@@ -116,18 +131,18 @@ export default function Home() {
           <h2>Imagens Geradas</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px' }}>
             {imagens.map((url, index) => (
-              <EstampaPreview key={index} imageUrl={url} highResUrl={highResUrls[index]} />
+              <div key={index} style={{ textAlign: 'center' }}>
+                <EstampaPreview imageUrl={url} />
+                <button
+                  onClick={() => handleDownloadPsd(url, index)}
+                  disabled={loadingPsd[index]}
+                  style={{ marginTop: '10px', padding: '8px', background: '#28a745', color: 'white', border: 'none' }}
+                >
+                  {loadingPsd[index] ? 'Processando...' : 'Baixar PSD'}
+                </button>
+              </div>
             ))}
           </div>
-          {psdUrl && (
-            <div style={{ marginTop: '20px' }}>
-              <a href={psdUrl} download="estampa.psd">
-                <button style={{ padding: '10px', background: '#28a745', color: 'white', border: 'none' }}>
-                  Baixar PSD
-                </button>
-              </a>
-            </div>
-          )}
         </div>
       )}
     </div>
