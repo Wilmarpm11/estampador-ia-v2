@@ -25,6 +25,12 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ estilo, cores, fundo }),
       });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Erro na API: ${res.status} - ${text}`);
+      }
+
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setImagens(data.imagens);
@@ -34,6 +40,12 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imagens: data.imagens }),
       });
+
+      if (!highResRes.ok) {
+        const text = await highResRes.text();
+        throw new Error(`Erro na API de alta resolução: ${highResRes.status} - ${text}`);
+      }
+
       const highResData = await highResRes.json();
       if (highResData.error) throw new Error(highResData.error);
       setHighResUrls(highResData.highResUrls);
@@ -43,6 +55,12 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imagens: highResData.highResUrls }),
       });
+
+      if (!psdRes.ok) {
+        const text = await psdRes.text();
+        throw new Error(`Erro na API de PSD: ${psdRes.status} - ${text}`);
+      }
+
       const psdData = await psdRes.json();
       if (psdData.error) throw new Error(psdData.error);
       setPsdUrl(psdData.psdUrl);
