@@ -1,6 +1,7 @@
 console.log('Inicializando API /api/gerar'); // Log inicial
 
 import { OpenAI } from 'openai';
+import { gerarPrompt } from '../../utils/geradorPrompt';
 
 console.log('Módulo OpenAI importado com sucesso'); // Log após importação
 
