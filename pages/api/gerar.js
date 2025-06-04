@@ -1,17 +1,13 @@
 console.log('Inicializando API /api/gerar'); // Log inicial
 
-import { Configuration, OpenAIApi } from 'openai';
-import { gerarPrompt } from '../../utils/geradorPrompt';
+import { OpenAI } from 'openai';
 
-console.log('Módulos importados com sucesso'); // Log após importação
+console.log('Módulo OpenAI importado com sucesso'); // Log após importação
 
-const configuration = new Configuration({
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-console.log('Configuração OpenAI criada'); // Log após configuração
-
-const openai = new OpenAIApi(configuration);
-console.log('Cliente OpenAI inicializado'); // Log após inicialização do cliente
+console.log('Cliente OpenAI inicializado'); // Log após inicialização
 
 export default async function handler(req, res) {
   console.log('Requisição recebida em /api/gerar'); // Log ao receber requisição
@@ -31,13 +27,13 @@ export default async function handler(req, res) {
   console.log('Prompt gerado:', prompt);
 
   try {
-    const response = await openai.createImage({
+    const response = await openai.images.generate({
       prompt,
       n: 4,
       size: '512x512',
     });
     console.log('Resposta da OpenAI:', response.data);
-    const imagens = response.data.data.map((item) => item.url);
+    const imagens = response.data.map((item) => item.url);
     res.status(200).json({ imagens });
   } catch (error) {
     console.error('Erro ao gerar imagens:', error.message);
