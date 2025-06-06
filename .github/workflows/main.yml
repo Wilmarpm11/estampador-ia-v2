@@ -1,0 +1,30 @@
+name: Fix NPM Vulnerabilities
+
+on:
+  workflow_dispatch: # Permite executar manualmente o workflow
+
+jobs:
+  fix-vulnerabilities:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.14.0' # Usa a mesma versão do Render
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Fix Vulnerabilities
+        run: npm audit fix --force
+
+      - name: Commit Changes
+        run: |
+          git config user.name "Wilmarpm11"
+          git config user.email "wilmarpm11@gmail.com" # Substitua pelo seu e-mail do GitHub
+          git add package.json package-lock.json
+          git commit -m "Fix high severity vulnerability with npm audit fix --force" || echo "No changes to commit"
+          git push
