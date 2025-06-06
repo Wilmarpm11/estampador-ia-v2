@@ -1,44 +1,49 @@
-console.log('Inicializando API /api/gerar'); // Log inicial
-
-import { OpenAI } from 'openai';
 import gerarPrompt from '../../utils/geradorPrompt';
-
-console.log('Módulo OpenAI importado com sucesso'); // Log após importação
+import OpenAI from 'openai';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-console.log('Cliente OpenAI inicializado'); // Log após inicialização
 
 export default async function handler(req, res) {
-  console.log('Requisição recebida em /api/gerar'); // Log ao receber requisição
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método não permitido' });
-  }
-
-  const { estilo, cores, fundo } = req.body;
-
-  if (!estilo || !cores || !fundo) {
-    return res.status(400).json({ error: 'Estilo, cores e fundo são obrigatórios' });
-  }
-
-  console.log('Gerando prompt:', { estilo, cores, fundo });
-  const prompt = gerarPrompt(estilo, cores, fundo);
-  console.log('Prompt gerado:', prompt);
+  console.log("Inicializando API /api/gerar");
+  console.log("Módulo OpenAI importado com sucesso");
+  console.log("Cliente OpenAI inicializado");
 
   try {
+    console.log("Requisição recebida em /api/gerar");
+    const { estilo, cores, fundo } = req.body;
+    console.log("Gerando prompt:", { estilo, cores, fundo });
+
+    // Converte strings em arrays, limpando espaços e pontos
+    const estilosArray = Array.isArray(estilo)
+      ? estilo
+      : estilo
+          .replace(/\./g, '') // Remove pontos
+          .split(',')
+          .map(item => item.trim())
+          .filter(Boolean); // Remove itens vazios
+    const coresArray = Array.isArray(cores)
+      ? cores
+      : cores
+          .split(',')
+          .map(item => item.trim())
+          .filter(Boolean);
+    const fundoStr = typeof fundo === 'string' ? fundo.trim() : fundo;
+
+    // Gera o prompt traduzido
+    const prompt = await gerarPrompt(estilosArray, coresArray, fundoStr);
+    console.log("Prompt traduzido:", prompt);
+
     const response = await openai.images.generate({
       prompt,
-      n: 2,
-      size: '512x512',
+      n: 1,
+      size: "512x512",
     });
-    console.log('Resposta da OpenAI:', response.data);
-    const imagens = response.data.map((item) => item.url);
-    res.status(200).json({ imagens });
+
+    res.status(200).json({ imageUrl: response.data[0].url });
   } catch (error) {
-    console.error('Erro ao gerar imagens:', error.message);
-    console.error('Detalhes do erro:', error.response?.data || error);
-    res.status(500).json({ error: `Erro ao gerar imagens: ${error.message}` });
+    console.error("Erro ao gerar imagem:", error);
+    res.status(500).json({ error: `Erro na API: ${error.message}` });
   }
 }
