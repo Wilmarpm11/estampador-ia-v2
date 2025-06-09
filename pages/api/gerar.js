@@ -36,7 +36,7 @@ export default async function handler(req, res) {
     const response = await openai.images.generate({
       prompt,
       n: 1,
-      size: "1792x1024", // Resolução alta para melhor detalhe
+      size: "1024x1024", // Resolução alta para melhor detalhe
       response_format: "b64_json",
     });
 
