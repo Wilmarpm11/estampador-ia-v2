@@ -7,8 +7,8 @@ async function gerarPrompt(estilos, cores, fundo) {
     : cores;
   const fundoStr = typeof fundo === "string" ? fundo : fundo.toString();
 
-  // Prompt simplificado em português, com instruções específicas
-  const prompt = `Uma estampa têxtil realista e tileável (padrão repetível sem bordas visíveis), contendo ${estiloStr}, nas cores ${corStr}, com fundo ${fundoStr}. Detalhes naturais e realistas de alta qualidade, pronta para impressão digital têxtil em alta resolução (300 DPI).`;
+  // Prompt refinado para evitar defeitos nas bordas
+  const prompt = `Uma estampa têxtil realista e perfeitamente tileável (padrão repetível sem bordas visíveis ou sobreposições), com ${estiloStr} dispostos de forma simétrica e equilibrada, usando apenas as cores ${corStr}, com fundo ${fundoStr}. Elementos naturais (aves, flores, folhas) repetidos em um layout contínuo e simétrico, com bordas uniformes e transições suaves entre repetições, sem cortes ou desalinhamentos visíveis, detalhes realistas de alta qualidade, pronta para impressão digital têxtil em 300 DPI.`;
 
   console.log("Prompt gerado:", prompt); // Para depuração
   return prompt;
