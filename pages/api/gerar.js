@@ -15,14 +15,13 @@ export default async function handler(req, res) {
     const { estilo, cores, fundo } = req.body;
     console.log("Gerando prompt:", { estilo, cores, fundo });
 
-    // Converte strings em arrays, limpando espaços e pontos
     const estilosArray = Array.isArray(estilo)
       ? estilo
       : estilo
-          .replace(/\./g, '') // Remove pontos
+          .replace(/\./g, '')
           .split(',')
           .map(item => item.trim())
-          .filter(Boolean); // Remove itens vazios
+          .filter(Boolean);
     const coresArray = Array.isArray(cores)
       ? cores
       : cores
@@ -31,17 +30,19 @@ export default async function handler(req, res) {
           .filter(Boolean);
     const fundoStr = typeof fundo === 'string' ? fundo.trim() : fundo;
 
-    // Gera o prompt traduzido
     const prompt = await gerarPrompt(estilosArray, coresArray, fundoStr);
-    console.log("Prompt traduzido:", prompt);
+    console.log("Prompt final:", prompt);
 
     const response = await openai.images.generate({
       prompt,
       n: 1,
-      size: "512x512",
+      size: "1024x1024",
+      response_format: "b64_json",
+      quality: "hd", // Adiciona qualidade HD (se disponível na API)
     });
 
-    res.status(200).json({ imageUrl: response.data[0].url });
+    const imageUrl = `data:image/png;base64,${response.data[0].b64_json}`;
+    res.status(200).json({ imageUrl });
   } catch (error) {
     console.error("Erro ao gerar imagem:", error);
     res.status(500).json({ error: `Erro na API: ${error.message}` });
