@@ -1,5 +1,6 @@
 import axios from 'axios';
 import OpenAI from 'openai';
+import FormData from 'form-data';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -25,26 +26,44 @@ export default async function handler(req, res) {
     });
 
     const base64Image = dallEResponse.data[0].b64_json;
-    const dallEImageUrl = `data:image/png;base64,${base64Image}`;
-    console.log("Imagem gerada pelo DALL-E:", dallEImageUrl);
+    console.log("Imagem gerada pelo DALL-E (base64):", base64Image.substring(0, 100) + "...");
 
-    // Prompt para o Runway ML
-    const runwayPrompt = `Ajuste esta imagem para ser perfeitamente tileável, preservando todos os elementos e cores originais, com bordas suaves e transições contínuas, pronta para impressão digital.`;
+    // Converter base64 para buffer e fazer upload para Imgur
+    const buffer = Buffer.from(base64Image, 'base64');
+    const formData = new FormData();
+    formData.append('image', buffer, { filename: 'temp_image.png' });
+
+    const imgurResponse = await axios.post(
+      'https://api.imgur.com/3/upload',
+      formData,
+      {
+        headers: {
+          ...formData.getHeaders(),
+          Authorization: `Client-ID ${process.env.IMGUR_CLIENT_ID}`,
+        },
+      }
+    );
+
+    const dallEImageUrl = imgurResponse.data.data.link;
+    console.log("Imagem hospedada no Imgur:", dallEImageUrl);
+
+    // Preparar requisição para Runway ML
+    const runwayFormData = new FormData();
+    runwayFormData.append('image', dallEImageUrl); // URL pública como referência
+    runwayFormData.append('prompt', `Ajuste esta imagem para ser perfeitamente tileável, preservando todos os elementos e cores originais, com bordas suaves e transições contínuas, pronta para impressão digital.`);
+    runwayFormData.append('model', 'gen4_image');
+    runwayFormData.append('seamless', 'true');
+    runwayFormData.append('output_format', 'png');
 
     // Chamada à API do Runway ML
     const runwayResponse = await axios.post(
-      'https://api.runwayml.com/v1/images/generate',
-      {
-        prompt: runwayPrompt,
-        reference_image_url: dallEImageUrl,
-        model: 'gen4_image',
-        seamless: true,
-        output_format: 'png',
-      },
+      'https://api.runwayml.com/v1/images/generate', // Endpoint inicial; confirme no portal
+      runwayFormData,
       {
         headers: {
+          ...runwayFormData.getHeaders(),
           Authorization: `Bearer ${process.env.RUNWAYML_API_SECRET}`,
-          'Content-Type': 'application/json',
+          'X-Runway-Version': '2024-11-06', // Ajuste conforme a versão atual
         },
       }
     );
@@ -53,7 +72,7 @@ export default async function handler(req, res) {
     console.log("Imagem ajustada pelo Runway:", imageUrl);
     res.status(200).json({ imageUrl });
   } catch (error) {
-    console.error("Erro ao gerar imagem:", error);
-    res.status(500).json({ error: `Erro na API: ${error.message}` });
+    console.error("Erro ao gerar imagem:", error.response?.data || error.message);
+    res.status(500).json({ error: `Erro na API: ${error.response?.data?.error || error.message}` });
   }
 }
