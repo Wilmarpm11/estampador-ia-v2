@@ -18,12 +18,12 @@ export default async function handler(req, res) {
     const tempFilePath = '/tmp/input.png';
     fs.writeFileSync(tempFilePath, buffer);
 
-    // Script Python com Pillow para tileabilidade aprimorada
+    // Script Python com Pillow para tileabilidade e conversão para CMYK
     const options = {
       mode: 'text',
       pythonPath: '/usr/bin/python3', // Ajuste conforme o ambiente
       scriptPath: __dirname,
-      args: [tempFilePath, '/tmp/output.png'],
+      args: [tempFilePath, '/tmp/output.psd'],
     };
 
     const pythonScript = `
@@ -55,7 +55,10 @@ if not top.tobytes() == bottom.tobytes():
 
 # Recorta de volta ao tamanho original
 final_img = new_img.crop((width // 2, height // 2, width * 1.5, height * 1.5))
-final_img.save(output_path)
+
+# Converte para CMYK e salva como PSD
+final_img = final_img.convert('CMYK')
+final_img.save(output_path, format='PSD', quality=95, save_all=True)
     `;
 
     const { stdout, stderr } = await new Promise((resolve, reject) => {
@@ -65,13 +68,13 @@ final_img.save(output_path)
       });
     });
 
-    // Converte para base64
-    const outputBuffer = fs.readFileSync('/tmp/output.png');
-    const outBase64 = `data:image/png;base64,${outputBuffer.toString('base64')}`;
+    // Lê o arquivo PSD e converte para base64 (se necessário)
+    const outputBuffer = fs.readFileSync('/tmp/output.psd');
+    const outBase64 = `data:application/psd;base64,${outputBuffer.toString('base64')}`;
 
     // Remove arquivos temporários
     fs.unlinkSync(tempFilePath);
-    fs.unlinkSync('/tmp/output.png');
+    fs.unlinkSync('/tmp/output.psd');
 
     res.status(200).json({ imageUrl: outBase64 });
   } catch (error) {
