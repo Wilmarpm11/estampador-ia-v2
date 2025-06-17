@@ -7,7 +7,7 @@ async function gerarPrompt(estilos, cores, fundo) {
     : cores;
   const fundoStr = typeof fundo === "string" ? fundo : fundo.toString();
 
-  const prompt = `Uma estampa têxtil realista com ${estiloStr}, usando apenas as cores ${corStr}, com fundo ${fundoStr}. Detalhes naturais de alta qualidade, pronta para edição em impressão digital.`;
+  const prompt = `Uma estampa têxtil seamless com ${estiloStr}, usando apenas as cores ${corStr}, com fundo ${fundoStr}. Detalhes naturais de alta qualidade, bordas alinhadas para repetição perfeita, otimizada para impressão digital têxtil em 300 DPI.`;
 
   console.log("Prompt gerado:", prompt);
   return prompt;
