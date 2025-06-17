@@ -18,7 +18,7 @@ export default async function handler(req, res) {
     const tempFilePath = '/tmp/input.png';
     fs.writeFileSync(tempFilePath, buffer);
 
-    // Script Python com Pillow para tileabilidade e conversão para CMYK
+    // Script Python com Pillow para tileabilidade aprimorada (espelhamento)
     const options = {
       mode: 'text',
       pythonPath: '/usr/bin/python3', // Ajuste conforme o ambiente
@@ -36,24 +36,27 @@ output_path = sys.argv[2]
 img = Image.open(input_path)
 width, height = img.size
 
-# Cria uma nova imagem com bordas ajustadas
-new_img = Image.new('RGBA', (width * 2, height * 2))
+# Cria uma nova imagem com bordas espelhadas
+new_img = Image.new('RGBA', (width * 3, height * 3))
 
 # Copia a imagem original para o centro
-new_img.paste(img, (width // 2, height // 2))
+new_img.paste(img, (width, height))
 
-# Ajusta bordas para tileabilidade
-left = img.crop((0, 0, 1, height))
-right = img.crop((width - 1, 0, width, height))
-if not left.tobytes() == right.tobytes():
-    new_img.paste(left, (0, height // 2))
+# Espelhamento das bordas para tileabilidade
+# Esquerda
+left_mirror = img.crop((0, 0, width // 2, height)).transpose(Image.FLIP_LEFT_RIGHT)
+new_img.paste(left_mirror, (0, height))
+# Direita
+right_mirror = img.crop((width // 2, 0, width, height)).transpose(Image.FLIP_LEFT_RIGHT)
+new_img.paste(right_mirror, (width * 2, height))
+# Topo
+top_mirror = img.crop((0, 0, width, height // 2)).transpose(Image.FLIP_TOP_BOTTOM)
+new_img.paste(top_mirror, (width, 0))
+# Base
+bottom_mirror = img.crop((0, height // 2, width, height)).transpose(Image.FLIP_TOP_BOTTOM)
+new_img.paste(bottom_mirror, (width, height * 2))
 
-top = img.crop((0, 0, width, 1))
-bottom = img.crop((height - 1, 0, width, height))
-if not top.tobytes() == bottom.tobytes():
-    new_img.paste(top, (width // 2, 0))
-
-# Recorta de volta ao tamanho original
+# Recorta para o tamanho original com bordas ajustadas
 final_img = new_img.crop((width // 2, height // 2, width * 1.5, height * 1.5))
 
 # Converte para CMYK e salva como PSD
@@ -68,7 +71,7 @@ final_img.save(output_path, format='PSD', quality=95, save_all=True)
       });
     });
 
-    // Lê o arquivo PSD e converte para base64 (se necessário)
+    // Lê o arquivo PSD e converte para base64
     const outputBuffer = fs.readFileSync('/tmp/output.psd');
     const outBase64 = `data:application/psd;base64,${outputBuffer.toString('base64')}`;
 
