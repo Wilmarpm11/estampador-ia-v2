@@ -1,18 +1,9 @@
 {
   "name": "estampador-ia",
   "version": "1.0.0",
-  "description": "Gerador de estampas com IA",
-  "main": "index.js",
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
-  },
-{
   "dependencies": {
     "openai": "^4.0.0",
     "python-shell": "^5.0.0",
-    "pillow": "^10.0.0", // Para compatibilidade, instale via npm
     "next": "^14.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
