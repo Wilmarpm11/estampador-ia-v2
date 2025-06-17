@@ -36,9 +36,8 @@ export default async function handler(req, res) {
     const response = await openai.images.generate({
       prompt,
       n: 1,
-      size: "512x512", // Reduzido para evitar limite de 4MB
+      size: "512x512", // Mantém tamanho reduzido
       response_format: "b64_json",
-      quality: "hd", // Para melhorar qualidade inicial
     });
 
     const imageUrl = `data:image/png;base64,${response.data[0].b64_json}`;
