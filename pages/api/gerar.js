@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
+  apiVersion: "2023-06-01", // Atualiza para versão que suporta dall-e-3
 });
 
 export default async function handler(req, res) {
@@ -12,8 +13,8 @@ export default async function handler(req, res) {
 
   try {
     console.log("Requisição recebida em /api/gerar");
-    const { estilo, cores, fundo, seed = 1234 } = req.body; // Seed padrão 1234
-    console.log("Gerando prompt:", { estilo, cores, fundo, seed });
+    const { estilo, cores, fundo } = req.body;
+    console.log("Gerando prompt:", { estilo, cores, fundo });
 
     const estilosArray = Array.isArray(estilo)
       ? estilo
@@ -36,10 +37,9 @@ export default async function handler(req, res) {
     const response = await openai.images.generate({
       prompt,
       n: 1,
-      size: "512x512",
+      size: "1024x1024", // Aumenta resolução
       response_format: "b64_json",
-      model: "dall-e-3", // Especifica dall-e-3
-      seed: parseInt(seed), // Seed sempre incluído
+      model: "dall-e-3", // Garante dall-e-3
     });
 
     const imageUrl = `data:image/png;base64,${response.data[0].b64_json}`;
