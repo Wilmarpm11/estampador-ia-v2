@@ -1,13 +1,13 @@
 async function gerarPrompt(estilos, cores, fundo) {
   const estiloStr = Array.isArray(estilos)
-    ? estilos.join(", ").replace(/,([^,]*)$/, " e $1")
+    ? estilos.join(", ")
     : estilos;
   const corStr = Array.isArray(cores)
-    ? cores.join(", ").replace(/,([^,]*)$/, " e $1")
+    ? cores.join(", ")
     : cores;
   const fundoStr = typeof fundo === "string" ? fundo : fundo.toString();
 
-  const prompt = `Uma estampa têxtil seamless com padrão repetível, destacando ${estiloStr} em um layout tropical equilibrado, usando exclusivamente as cores ${corStr}, com fundo ${fundoStr}. Inclua martim-pescador e tulipas como elementos principais, com folhagem como fundo, distribuídos uniformemente para repetição perfeita. Detalhes realistas, bordas suaves e alinhadas, otimizada para impressão digital têxtil em alta resolução (300 DPI).`;
+  const prompt = `Uma estampa têxtil inspirada em ${estiloStr}, usando cores como ${corStr}, com fundo ${fundoStr}. Estilo tropical e natural, ideal para impressão têxtil, com liberdade criativa para elementos como pássaros, flores e folhas.`;
 
   console.log("Prompt gerado:", prompt);
   return prompt;
