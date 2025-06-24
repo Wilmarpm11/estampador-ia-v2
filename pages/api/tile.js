@@ -18,7 +18,7 @@ export default async function handler(req, res) {
     const tempFilePath = '/tmp/input.png';
     fs.writeFileSync(tempFilePath, buffer);
 
-    // Script Python com Pillow para tileabilidade aprimorada (espelhamento)
+    // Script Python com Pillow para tileabilidade aprimorada
     const options = {
       mode: 'text',
       pythonPath: '/usr/bin/python3', // Ajuste conforme o ambiente
@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     };
 
     const pythonScript = `
-from PIL import Image
+from PIL import Image, ImageFilter
 import sys
 
 input_path = sys.argv[1]
@@ -42,22 +42,21 @@ new_img = Image.new('RGBA', (width * 3, height * 3))
 # Copia a imagem original para o centro
 new_img.paste(img, (width, height))
 
-# Espelhamento das bordas para tileabilidade
-# Esquerda
+# Espelhamento das bordas
 left_mirror = img.crop((0, 0, width // 2, height)).transpose(Image.FLIP_LEFT_RIGHT)
-new_img.paste(left_mirror, (0, height))
-# Direita
+new_img.paste(left_mirror.filter(ImageFilter.SMOOTH), (0, height))
 right_mirror = img.crop((width // 2, 0, width, height)).transpose(Image.FLIP_LEFT_RIGHT)
-new_img.paste(right_mirror, (width * 2, height))
-# Topo
+new_img.paste(right_mirror.filter(ImageFilter.SMOOTH), (width * 2, height))
 top_mirror = img.crop((0, 0, width, height // 2)).transpose(Image.FLIP_TOP_BOTTOM)
-new_img.paste(top_mirror, (width, 0))
-# Base
+new_img.paste(top_mirror.filter(ImageFilter.SMOOTH), (width, 0))
 bottom_mirror = img.crop((0, height // 2, width, height)).transpose(Image.FLIP_TOP_BOTTOM)
-new_img.paste(bottom_mirror, (width, height * 2))
+new_img.paste(bottom_mirror.filter(ImageFilter.SMOOTH), (width, height * 2))
+
+# Suaviza a imagem completa
+new_img = new_img.filter(ImageFilter.SMOOTH)
 
 # Recorta para o tamanho original com bordas ajustadas
-final_img = new_img.crop((width // 2, height // 2, width * 1.5, height * 1.5))
+final_img = new_img.crop((width, height, width * 2, height * 2))
 
 # Converte para CMYK e salva como PSD
 final_img = final_img.convert('CMYK')
