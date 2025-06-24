@@ -12,8 +12,8 @@ export default async function handler(req, res) {
 
   try {
     console.log("Requisição recebida em /api/gerar");
-    const { estilo, cores, fundo } = req.body;
-    console.log("Gerando prompt:", { estilo, cores, fundo });
+    const { estilo, cores, fundo, seed } = req.body;
+    console.log("Gerando prompt:", { estilo, cores, fundo, seed });
 
     const estilosArray = Array.isArray(estilo)
       ? estilo
@@ -38,6 +38,7 @@ export default async function handler(req, res) {
       n: 1,
       size: "512x512",
       response_format: "b64_json",
+      ...(seed && { seed: parseInt(seed) }), // Adiciona seed se fornecido
     });
 
     const imageUrl = `data:image/png;base64,${response.data[0].b64_json}`;
