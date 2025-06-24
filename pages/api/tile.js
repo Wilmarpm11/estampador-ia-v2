@@ -18,16 +18,16 @@ export default async function handler(req, res) {
     const tempFilePath = '/tmp/input.png';
     fs.writeFileSync(tempFilePath, buffer);
 
-    // Script Python com Pillow para tileabilidade aprimorada
+    // Script Python com Pillow para ajuste básico
     const options = {
       mode: 'text',
       pythonPath: '/usr/bin/python3', // Ajuste conforme o ambiente
       scriptPath: __dirname,
-      args: [tempFilePath, '/tmp/output.psd'],
+      args: [tempFilePath, '/tmp/output.png'],
     };
 
     const pythonScript = `
-from PIL import Image, ImageFilter
+from PIL import Image
 import sys
 
 input_path = sys.argv[1]
@@ -36,31 +36,19 @@ output_path = sys.argv[2]
 img = Image.open(input_path)
 width, height = img.size
 
-# Cria uma nova imagem com bordas espelhadas
-new_img = Image.new('RGBA', (width * 3, height * 3))
+# Ajuste básico de bordas (sem espelhamento complexo)
+left = img.crop((0, 0, 1, height))
+right = img.crop((width - 1, 0, width, height))
+if not left.tobytes() == right.tobytes():
+    img.paste(left, (width - 1, 0))
 
-# Copia a imagem original para o centro
-new_img.paste(img, (width, height))
+top = img.crop((0, 0, width, 1))
+bottom = img.crop((height - 1, 0, width, height))
+if not top.tobytes() == bottom.tobytes():
+    img.paste(top, (0, height - 1))
 
-# Espelhamento das bordas
-left_mirror = img.crop((0, 0, width // 2, height)).transpose(Image.FLIP_LEFT_RIGHT)
-new_img.paste(left_mirror.filter(ImageFilter.SMOOTH), (0, height))
-right_mirror = img.crop((width // 2, 0, width, height)).transpose(Image.FLIP_LEFT_RIGHT)
-new_img.paste(right_mirror.filter(ImageFilter.SMOOTH), (width * 2, height))
-top_mirror = img.crop((0, 0, width, height // 2)).transpose(Image.FLIP_TOP_BOTTOM)
-new_img.paste(top_mirror.filter(ImageFilter.SMOOTH), (width, 0))
-bottom_mirror = img.crop((0, height // 2, width, height)).transpose(Image.FLIP_TOP_BOTTOM)
-new_img.paste(bottom_mirror.filter(ImageFilter.SMOOTH), (width, height * 2))
-
-# Suaviza a imagem completa
-new_img = new_img.filter(ImageFilter.SMOOTH)
-
-# Recorta para o tamanho original com bordas ajustadas
-final_img = new_img.crop((width, height, width * 2, height * 2))
-
-# Converte para CMYK e salva como PSD
-final_img = final_img.convert('CMYK')
-final_img.save(output_path, format='PSD', quality=95, save_all=True)
+# Salva como PNG (CMYK será feito externamente)
+img.save(output_path, 'PNG')
     `;
 
     const { stdout, stderr } = await new Promise((resolve, reject) => {
@@ -70,13 +58,13 @@ final_img.save(output_path, format='PSD', quality=95, save_all=True)
       });
     });
 
-    // Lê o arquivo PSD e converte para base64
-    const outputBuffer = fs.readFileSync('/tmp/output.psd');
-    const outBase64 = `data:application/psd;base64,${outputBuffer.toString('base64')}`;
+    // Lê o arquivo e converte para base64
+    const outputBuffer = fs.readFileSync('/tmp/output.png');
+    const outBase64 = `data:image/png;base64,${outputBuffer.toString('base64')}`;
 
     // Remove arquivos temporários
     fs.unlinkSync(tempFilePath);
-    fs.unlinkSync('/tmp/output.psd');
+    fs.unlinkSync('/tmp/output.png');
 
     res.status(200).json({ imageUrl: outBase64 });
   } catch (error) {
