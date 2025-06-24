@@ -12,7 +12,7 @@ export default async function handler(req, res) {
 
   try {
     console.log("Requisição recebida em /api/gerar");
-    const { estilo, cores, fundo, seed } = req.body;
+    const { estilo, cores, fundo, seed = 1234 } = req.body; // Seed padrão 1234
     console.log("Gerando prompt:", { estilo, cores, fundo, seed });
 
     const estilosArray = Array.isArray(estilo)
@@ -38,7 +38,8 @@ export default async function handler(req, res) {
       n: 1,
       size: "512x512",
       response_format: "b64_json",
-      ...(seed && { seed: parseInt(seed) }), // Adiciona seed se fornecido
+      model: "dall-e-3", // Especifica dall-e-3
+      seed: parseInt(seed), // Seed sempre incluído
     });
 
     const imageUrl = `data:image/png;base64,${response.data[0].b64_json}`;
