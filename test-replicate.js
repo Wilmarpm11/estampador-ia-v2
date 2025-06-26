@@ -2,7 +2,7 @@ const fetch = require('node-fetch');
 
 async function testReplicate() {
   // COLE SEU TOKEN AQUI (substitua a linha abaixo)
-  const token = 'r8_N4v3vvzvHRXq1f9Mqrg1szko90NjDTB0Q3J1S' ; 
+  const token = 'r8_N4v3vvzvHRXq1f9Mqrg1szko90NjDTB0Q3J1S'; 
   
   try {
     console.log('🧪 Testando sua API Replicate...');
